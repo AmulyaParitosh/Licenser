@@ -1,7 +1,5 @@
 import argparse
 import datetime
-
-# from os import path
 from pathlib import Path
 
 import argcomplete
@@ -41,10 +39,6 @@ class LicenserInterface:
     def run(self) -> None:
         args = self.parser.parse_args()
 
-        if self.license_path.exists() and not args.f:
-            print("LICENSE file already exists. Use -f to force overwrite.")
-            return
-
         if not args.author:
             args.author = input(f"Author name({self.config.author}): ")
             if args.author == "":
@@ -63,6 +57,10 @@ class LicenserInterface:
         self.args = args
 
     def create_file(self) -> None:
+        if self.license_path.exists() and not self.args.f:
+            print("LICENSE file already exists. Use -f to force overwrite.")
+            return
+
         try:
             license_text = fetch_license_text(self.args.spdx)
             license_text = (

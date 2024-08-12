@@ -1,5 +1,4 @@
 import json
-import subprocess
 
 # import requests
 from urllib import request
@@ -7,7 +6,7 @@ from urllib import request
 from .constants import available_licenses
 
 
-def fetch_license_text(spdx_identifier: str):
+def fetch_license_text(spdx_identifier: str) -> str:
     url = available_licenses[spdx_identifier]["url"]
     response = request.urlopen(url)
 

@@ -33,6 +33,7 @@ class Config:
     email = GitUserCredential()
 
 
-x = Config()
-print(x.author)
-print(x.email)
+if __name__ == "__main__":
+    x = Config()
+    print(x.author)
+    print(x.email)

@@ -1,18 +1,21 @@
 import argparse
 import datetime
+from pathlib import Path
 
 import argcomplete
 
 from .config import Config
-from .constants import available_licenses
 from .utils import LicenseNotSupportedError, fetch_license_text
 
 
 class LicenserInterface:
 
+    config: Config = Config()
+    args: argparse.Namespace
+
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.license_path = config.WORKING_DIR / "LICENSE"
+        self.license_path: Path = config.WORKING_DIR / "LICENSE"
 
         self.parser = argparse.ArgumentParser(
             description="Generate license files with SPDX identifier."
@@ -23,7 +26,7 @@ class LicenserInterface:
             "spdx",
             type=str,
             help="SPDX identifier of the license to generate",
-            choices=list(available_licenses.keys()),
+            choices=list(config.available_licenses.keys()),
         )
         self.parser.add_argument("--author", type=str, help="Author name")
         self.parser.add_argument("--email", type=str, help="Author email")

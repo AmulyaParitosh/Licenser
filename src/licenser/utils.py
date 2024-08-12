@@ -1,8 +1,10 @@
+import json
+
+
 class LicenseNotSupportedError(Exception):
+
     def __init__(self, license_name: str) -> None:
-        return super().__init__(
-            f"Unknown or UnSupported SPDX identifier {license_name}"
-        )
+        super().__init__(f"Unknown or UnSupported SPDX identifier {license_name}")
 
 
 def fetch_license_text(spdx_identifier: str) -> str:

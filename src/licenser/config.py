@@ -1,6 +1,7 @@
 # create a descriptor for git credentials
 
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 
@@ -31,6 +32,7 @@ class Config:
 
     author = GitUserCredential("name")
     email = GitUserCredential()
+    WORKING_DIR = Path.cwd()
 
 
 if __name__ == "__main__":

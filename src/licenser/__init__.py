@@ -6,4 +6,3 @@ def main():
     config = Config()
     cli = LicenserInterface(config)
     cli.run()
-    cli.create_file()

@@ -1,22 +1,18 @@
 import argparse
 import datetime
-from pathlib import Path
 
 import argcomplete
 
 from .config import Config
 from .constants import available_licenses
-from .utils import fetch_license_text
-
-WORKING_DIR = Path.cwd()
-print(WORKING_DIR)
+from .utils import LicenseNotSupportedError, fetch_license_text
 
 
 class LicenserInterface:
 
     def __init__(self, config: Config) -> None:
-        self.license_path = WORKING_DIR / "LICENSE"
         self.config = config
+        self.license_path = config.WORKING_DIR / "LICENSE"
 
         self.parser = argparse.ArgumentParser(
             description="Generate license files with SPDX identifier."
@@ -33,11 +29,18 @@ class LicenserInterface:
         self.parser.add_argument("--email", type=str, help="Author email")
         self.parser.add_argument("--year", type=str, help="Year")
         self.parser.add_argument(
-            "-f", type=str, help="Force overwrite existing LICENSE file"
+            "-o",
+            help="Overwrite existing LICENSE file",
+            action="store_true",
         )
 
-    def run(self) -> None:
+    def parse_args(self) -> None:
         args = self.parser.parse_args()
+
+        if self.license_path.exists() and not args.f:
+            raise FileExistsError(
+                "LICENSE file already exists. Use -f to force overwrite."
+            )
 
         if not args.author:
             args.author = input(f"Author name({self.config.author}): ")
@@ -57,10 +60,6 @@ class LicenserInterface:
         self.args = args
 
     def create_file(self) -> None:
-        if self.license_path.exists() and not self.args.f:
-            print("LICENSE file already exists. Use -f to force overwrite.")
-            return
-
         try:
             license_text = fetch_license_text(self.args.spdx)
             license_text = (
@@ -69,9 +68,20 @@ class LicenserInterface:
                 .replace("[email]", self.args.email)
             )
 
-            with self.license_path.open("w", encoding="utf-8") as f:
-                f.write(license_text)
+            self.license_path.write_text(license_text, encoding="utf-8")
 
             print(f"{self.args.spdx} license file generated successfully.")
         except ValueError as e:
             print(e)
+
+    def run(self):
+        try:
+            self.parse_args()
+
+        except FileExistsError as err:
+            print(err)
+            exit(1)
+
+        except LicenseNotSupportedError as err:
+            print(err)
+            exit(1)

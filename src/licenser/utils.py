@@ -1,3 +1,10 @@
+class LicenseNotSupportedError(Exception):
+    def __init__(self, license_name: str) -> None:
+        return super().__init__(
+            f"Unknown or UnSupported SPDX identifier {license_name}"
+        )
+
+
 def fetch_license_text(spdx_identifier: str) -> str:
     try:
         with open(
@@ -6,6 +13,4 @@ def fetch_license_text(spdx_identifier: str) -> str:
             return f.read()
 
     except FileNotFoundError as err:
-        raise ValueError(
-            f"Failed to fetch license text for SPDX identifier: {spdx_identifier}"
-        ) from err
+        raise LicenseNotSupportedError(spdx_identifier) from err

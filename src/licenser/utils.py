@@ -1,19 +1,11 @@
-import json
-
-# import requests
-from urllib import request
-
-from .constants import available_licenses
-
-
 def fetch_license_text(spdx_identifier: str) -> str:
-    url = available_licenses[spdx_identifier]["url"]
-    response = request.urlopen(url)
+    try:
+        with open(
+            f"src/licenser/templates/{spdx_identifier}.txt", "r", encoding="utf-8"
+        ) as f:
+            return f.read()
 
-    if response.status == 200:
-        license_data = json.loads(response.read().decode("utf-8"))
-        return license_data["body"]
-
-    raise ValueError(
-        f"Failed to fetch license text for SPDX identifier: {spdx_identifier}"
-    )
+    except FileNotFoundError as err:
+        raise ValueError(
+            f"Failed to fetch license text for SPDX identifier: {spdx_identifier}"
+        ) from err

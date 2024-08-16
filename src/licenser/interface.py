@@ -1,6 +1,7 @@
 import argparse
 import datetime
 from pathlib import Path
+from typing import List, Optional
 
 import argcomplete
 
@@ -16,7 +17,7 @@ class LicenserInterface:
 
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.license_path: Path = config.WORKING_DIR / "LICENSE"
+        self.license_path: Path = config.working_dir / "LICENSE"
 
         self.parser = argparse.ArgumentParser(
             description="Generate license files with SPDX identifier."
@@ -38,42 +39,45 @@ class LicenserInterface:
             action="store_true",
         )
 
-    def parse_args(self) -> None:
-        args = self.parser.parse_args()
+    def parse_args(self, args: Optional[List[str]] = None) -> None:
+        if args:
+            parsed_args = self.parser.parse_args(args)
+        else:
+            parsed_args = self.parser.parse_args()
 
-        if self.license_path.exists() and not args.o:
+        if self.license_path.exists() and not parsed_args.o:
             raise FileExistsError(
                 "LICENSE file already exists. Use -o to force overwrite."
             )
 
-        if not args.author:
-            args.author = input(f"Author name({self.config.author}): ")
-            if args.author == "":
-                args.author = self.config.author
+        if not parsed_args.author:
+            parsed_args.author = input(f"Author name({self.config.author}): ")
+            if parsed_args.author == "":
+                parsed_args.author = self.config.author
 
-        if not args.email:
-            args.email = input(f"Author email({self.config.email}): ")
-            if args.email == "":
-                args.email = self.config.email
+        if not parsed_args.email:
+            parsed_args.email = input(f"Author email({self.config.email}): ")
+            if parsed_args.email == "":
+                parsed_args.email = self.config.email
 
-        if not args.year:
-            args.year = input(f"Year({datetime.datetime.now().year}): ")
-            if args.year == "":
-                args.year = str(datetime.datetime.now().year)
+        if not parsed_args.year:
+            parsed_args.year = input(f"Year({datetime.datetime.now().year}): ")
+            if parsed_args.year == "":
+                parsed_args.year = str(datetime.datetime.now().year)
 
-        self.args = args
+        self.args = parsed_args
 
-    def run(self):
+    def run(self, args: Optional[List[str]] = None) -> None:
         try:
-            self.parse_args()
+            self.parse_args(args)
             create_file(
                 self.args.spdx,
                 self.args.year,
                 self.args.author,
                 self.args.email,
-                self.config.WORKING_DIR / "LICENSE",
+                self.config.working_dir / "LICENSE",
             )
-            update_pyproject_license(self.args.spdx)
+            update_pyproject_license(self.args.spdx, self.config.pyproject_path)
 
         except FileExistsError as err:
             print(err)

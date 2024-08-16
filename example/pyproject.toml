@@ -1,0 +1,18 @@
+[project]
+name = "Example"
+version = "0.1.0"
+description = "example for Command Line tool to generate license files"
+authors = [
+    {name = "John", email = "john@test.com"},
+]
+dependencies = []
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pdm]
+distribution = true

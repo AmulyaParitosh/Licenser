@@ -1,6 +1,3 @@
-import json
-
-
 class LicenseNotSupportedError(Exception):
 
     def __init__(self, license_name: str) -> None:

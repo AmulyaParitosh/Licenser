@@ -31,14 +31,22 @@ class Config:
 
     author = GitUserCredential("name")
     email = GitUserCredential()
-    WORKING_DIR = Path.cwd()
-    APP_DIR = Path(__file__).parent.parent.parent
+    working_dir = Path.cwd()
+    add_dir = Path(__file__).parent.parent.parent
     available_licenses: Dict[str, Dict[str, str]] = json.loads(
         Path("src/licenser/templates/licenses_index.json").read_text(encoding="utf-8")
     )
+    pyproject_path = Path("pyproject.toml")
+
+    @classmethod
+    def test_config(cls) -> "Config":
+        config = cls()
+        config.working_dir = Path("example")
+        config.pyproject_path = Path("example/pyproject.toml")
+        return config
 
 
 if __name__ == "__main__":
     x = Config()
-    print(x.APP_DIR)
+    print(x.add_dir)
     print(x.email)

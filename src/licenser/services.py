@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 
@@ -23,9 +22,7 @@ def create_file(
         print(e)
 
 
-def update_pyproject_license(
-    new_spdx: str, pyproject_path: Path = Path("pyproject.toml")
-):
+def update_pyproject_license(new_spdx: str, pyproject_path: Path):
 
     # TODO: can be done with regex, look into it later
 

@@ -32,6 +32,7 @@ class Config:
     author = GitUserCredential("name")
     email = GitUserCredential()
     WORKING_DIR = Path.cwd()
+    APP_DIR = Path(__file__).parent.parent.parent
     available_licenses: Dict[str, Dict[str, str]] = json.loads(
         Path("src/licenser/templates/licenses_index.json").read_text(encoding="utf-8")
     )
@@ -39,5 +40,5 @@ class Config:
 
 if __name__ == "__main__":
     x = Config()
-    print(x.author)
+    print(x.APP_DIR)
     print(x.email)

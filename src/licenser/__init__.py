@@ -1,5 +1,5 @@
-from .cli import LicenserInterface
 from .config import Config
+from .interface import LicenserInterface
 
 
 def main():

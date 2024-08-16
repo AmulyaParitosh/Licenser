@@ -5,7 +5,8 @@ from pathlib import Path
 import argcomplete
 
 from .config import Config
-from .utils import LicenseNotSupportedError, fetch_license_text
+from .services import create_file, update_pyproject_license
+from .utils import LicenseNotSupportedError
 
 
 class LicenserInterface:
@@ -40,9 +41,9 @@ class LicenserInterface:
     def parse_args(self) -> None:
         args = self.parser.parse_args()
 
-        if self.license_path.exists() and not args.f:
+        if self.license_path.exists() and not args.o:
             raise FileExistsError(
-                "LICENSE file already exists. Use -f to force overwrite."
+                "LICENSE file already exists. Use -o to force overwrite."
             )
 
         if not args.author:
@@ -62,24 +63,17 @@ class LicenserInterface:
 
         self.args = args
 
-    def create_file(self) -> None:
-        try:
-            license_text = fetch_license_text(self.args.spdx)
-            license_text = (
-                license_text.replace("[year]", self.args.year)
-                .replace("[fullname]", self.args.author)
-                .replace("[email]", self.args.email)
-            )
-
-            self.license_path.write_text(license_text, encoding="utf-8")
-
-            print(f"{self.args.spdx} license file generated successfully.")
-        except ValueError as e:
-            print(e)
-
     def run(self):
         try:
             self.parse_args()
+            create_file(
+                self.args.spdx,
+                self.args.year,
+                self.args.author,
+                self.args.email,
+                self.config.WORKING_DIR / "LICENSE",
+            )
+            update_pyproject_license(self.args.spdx)
 
         except FileExistsError as err:
             print(err)

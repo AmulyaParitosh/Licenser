@@ -8,12 +8,3 @@
 # by John
 # ________________________________________________
 # # %license_header%
-import os
-
-
-def dummy_code_generator():
-    code = "adsffsafasd"
-
-
-def test_dummy_code_generator():
-    assert dummy_code_generator() == "adsffsafasd"

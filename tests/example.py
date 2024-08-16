@@ -2,7 +2,6 @@ from pathlib import Path
 
 from licenser.config import Config
 from licenser.interface import LicenserInterface
-from licenser.services import add_license_header
 
 
 def run(arg_str: str):
@@ -14,5 +13,6 @@ def run(arg_str: str):
 
 
 if __name__ == "__main__":
-    # run("BSD-3-Clause --author John --email john@test.com --year 2024 -o")
-    add_license_header(Path("example/test.py"), Path("example/.license_header"))
+    # run("create BSD-3-Clause --author John --email john@test.com --year 2024 -o")
+    run("create BSD-3-Clause --author John -o")
+    # add_license_header(Path("example/test.py"), Path("example/.license_header"))

@@ -1,0 +1,25 @@
+# Key-value pairs
+key1 = value1
+key2 = value2
+
+# Multi-line text blocks
+[header]
+'''
+This is a multi-line
+header text block.
+It can span multiple lines.
+'''
+
+[footer]
+'''
+This is a multi-line
+footer text block.
+'''
+
+# You can have multiple sections
+[custom_section]
+custom_key = custom_value
+'''
+This is another
+multi-line block.
+'''

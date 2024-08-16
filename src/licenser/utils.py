@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from .config import Config
+
 
 class LicenseNotSupportedError(Exception):
 
@@ -34,13 +36,11 @@ LICENSE_TAG = "# %license_header%"
 
 
 def prepare_license_header(license_header_text: str) -> str:
+    spdx: str = str(Config._parse_config().get("spdx"))
     license_header = "\n" + license_header_text
     license_header = license_header.replace("\n", "\n# ")
-
-    _, spdx, _ = extract_license_from_pyproject(Path("pyproject.toml")).split('"')
     license_header = license_header.replace("%%SPDX%%", spdx)
-
-    license_header = LICENSE_TAG + license_header + LICENSE_TAG
+    license_header = LICENSE_TAG + license_header + "\n" + LICENSE_TAG
 
     return license_header
 
@@ -64,3 +64,15 @@ def remove_license_header(file_content: str) -> str:
             content.pop(i)
 
     return "\n".join(content)
+
+
+def update_pyproject_license(new_spdx: str, pyproject_path: Path) -> None:
+    original_pyproject_data = pyproject_path.read_text(encoding="utf-8")
+    original_license_section = extract_license_from_pyproject(pyproject_path)
+
+    new_license_section = f'{"{"}text = "{new_spdx}"{"}"}'
+    new_pyproject_data = original_pyproject_data.replace(
+        original_license_section, new_license_section
+    )
+
+    pyproject_path.write_text(new_pyproject_data, encoding="utf-8")

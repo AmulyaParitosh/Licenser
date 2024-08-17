@@ -7,7 +7,7 @@ from typing import List, Optional
 import argcomplete
 
 from . import services
-from .config import Config
+from .config import Config, DefaultConfigPath
 
 
 class LicenserInterface:
@@ -15,7 +15,7 @@ class LicenserInterface:
     config: Config
     args: argparse.Namespace
 
-    def __init__(self, config: Config = Config()) -> None:
+    def __init__(self, config: Config) -> None:
         self.config = config
 
         self.parser = argparse.ArgumentParser(
@@ -118,7 +118,16 @@ class LicenserInterface:
         self.config.update_spdx(args.spdx)
 
     def header_command(self, args: argparse.Namespace) -> None:
-        license_header_text = self.config.header.get("content", "")
+        if not DefaultConfigPath.exists():
+            print(f"config not found at {DefaultConfigPath}.")
+            exit(1)
+
+        try:
+            license_header_text = self.config.header.get("content", "")
+        except AttributeError:
+            print(f"header content not found in {DefaultConfigPath}")
+            exit(1)
+
         if not args.dir:
             services.add_license_header(args.path, license_header_text)
             return

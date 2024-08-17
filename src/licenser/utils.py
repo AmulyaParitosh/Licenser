@@ -12,7 +12,9 @@ class LicenseNotSupportedError(Exception):
 def fetch_license_text(spdx_identifier: str) -> str:
     try:
         with open(
-            f"src/licenser/templates/{spdx_identifier}.txt", "r", encoding="utf-8"
+            Config.app_dir / f"src/licenser/templates/{spdx_identifier}.txt",
+            "r",
+            encoding="utf-8",
         ) as f:
             return f.read()
 
@@ -103,7 +105,6 @@ def remove_license_header(file_content: str) -> str:
 
         i += 1
 
-    print("remaining content", content)
     return "\n".join(content)
 
 

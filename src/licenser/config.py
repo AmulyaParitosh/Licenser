@@ -46,7 +46,7 @@ class Config:
     spdx: str
     header: Dict[str, str]
 
-    def __init__(self, config_file: Path = DefaultConfigPath) -> None:
+    def __init__(self, config_file: Path) -> None:
         if config_file.exists():
             self.__config: _ParsedConfig = self._parse_config(config_file)
         else:
@@ -61,7 +61,7 @@ class Config:
 
     @classmethod
     def test_config(cls) -> "Config":
-        config = cls()
+        config = cls(DefaultConfigPath)
         config.working_dir = Path("example")
         return config
 
@@ -143,7 +143,7 @@ class Config:
 
 
 if __name__ == "__main__":
-    x = Config()
+    x = Config(DefaultConfigPath)
     print(x.app_dir)
     print(x.author)
     print(x.email)

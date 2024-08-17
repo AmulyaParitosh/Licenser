@@ -72,13 +72,18 @@ def convert_to_multiline_comment(text, file_extension):
     return comment_template.format(text)
 
 
-def prepare_license_header(license_header_text: str, file_extension: str) -> str:
-    spdx: str = str(Config._parse_config().get("spdx"))
+def prepare_license_header(
+    license_header_text: str, file_extension: str, **kwargs
+) -> str:
     license_header = (
         "\n" + LICENSE_TAG + "\n" + license_header_text + "\n" + LICENSE_TAG + "\n"
     )
+    license_header = (
+        license_header.replace("%%SPDX%%", kwargs.get("spdx", "%%SPDX%%"))
+        .replace("%%AUTHOR%%", kwargs.get("author", "%%AUTHOR%%"))
+        .replace("%%EMAIL%%", kwargs.get("email", "%%EMAIL%%"))
+    )
     license_header = convert_to_multiline_comment(license_header, file_extension)
-    license_header = license_header.replace("%%SPDX%%", spdx)
 
     return license_header
 

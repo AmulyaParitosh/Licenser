@@ -135,7 +135,13 @@ class LicenserInterface:
             exit(1)
 
         if not args.dir:
-            services.add_license_header(args.path, license_header_text)
+            services.add_license_header(
+                args.path,
+                license_header_text,
+                spdx=self.config.spdx,
+                author=self.config.author,
+                email=self.config.email,
+            )
             return
 
         def recursive_add_license_header(directory: Path) -> None:
@@ -143,7 +149,13 @@ class LicenserInterface:
                 if path.is_dir():
                     recursive_add_license_header(path)
                 elif path.is_file() and args.regex and re.match(args.regex, path.name):
-                    services.add_license_header(path, license_header_text)
+                    services.add_license_header(
+                        path,
+                        license_header_text,
+                        spdx=self.config.spdx,
+                        author=self.config.author,
+                        email=self.config.email,
+                    )
 
         recursive_add_license_header(args.path)
 

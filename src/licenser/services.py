@@ -29,11 +29,13 @@ def create_license_file(
         utils.update_pyproject_license(spdx_identifier, pyproject)
 
 
-def add_license_header(file_path: Path, license_header: str) -> None:
+def add_license_header(file_path: Path, license_header: str, **kwargs) -> None:
     content = file_path.read_text(encoding="utf-8")
     content_without_header = utils.remove_license_header(content)
 
-    license_header = utils.prepare_license_header(license_header, file_path.suffix[1:])
+    license_header = utils.prepare_license_header(
+        license_header, file_path.suffix[1:], **kwargs
+    )
     modified_content = license_header + "\n" + content_without_header
 
     file_path.write_text(modified_content, encoding="utf-8")

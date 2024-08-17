@@ -73,6 +73,12 @@ class LicenserInterface:
         )
         header_parser.set_defaults(func=self.header_command)
 
+        generate_config_parser = subparsers.add_parser(
+            "generate_config",
+            help="generates a default config file if not already existing",
+        )
+        generate_config_parser.set_defaults(func=self.generate_config_command)
+
     def run(self, args: Optional[List[str]] = None) -> None:
         if args:
             parsed_args = self.parser.parse_args(args)
@@ -140,3 +146,19 @@ class LicenserInterface:
                     services.add_license_header(path, license_header_text)
 
         recursive_add_license_header(args.path)
+
+    def generate_config_command(self, args: argparse.Namespace) -> None:
+        default_config_template = (
+            self.config.app_dir / "src/licenser/templates/default.licenserConfig"
+        )
+        if DefaultConfigPath.exists():
+            print(".licenserConfig already exists")
+            exit(1)
+
+        config = Config(default_config_template)
+        config.header["content"] = (
+            config.header["content"]
+            .replace("%%SPDX%%", config.spdx)
+            .replace("%%AUTHOR%%", str(config.author))
+        )
+        config.write_config()

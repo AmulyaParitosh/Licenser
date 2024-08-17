@@ -1,12 +1,17 @@
-author = John Doe
-email = john@doe.test
+author =
+email =
 spdx = MIT
 
 [header]
 '''
 SPDX: %%SPDX%%
 
+
+
+This is a license header for the example project
 ________________________________________________
-This project is build by %%AUTHOR%%.
+
+This is a Toy project
+by %%AUTHOR%%
 ________________________________________________
 '''

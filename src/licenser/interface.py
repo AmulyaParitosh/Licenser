@@ -118,10 +118,9 @@ class LicenserInterface:
         self.config.update_spdx(args.spdx)
 
     def header_command(self, args: argparse.Namespace) -> None:
+        license_header_text = self.config.header.get("content", "")
         if not args.dir:
-            services.add_license_header(
-                args.path, self.config.header.get("content", "")
-            )
+            services.add_license_header(args.path, license_header_text)
             return
 
         def recursive_add_license_header(directory: Path) -> None:
@@ -129,8 +128,6 @@ class LicenserInterface:
                 if path.is_dir():
                     recursive_add_license_header(path)
                 elif path.is_file() and args.regex and re.match(args.regex, path.name):
-                    services.add_license_header(
-                        path, self.config.header.get("content", "")
-                    )
+                    services.add_license_header(path, license_header_text)
 
         recursive_add_license_header(args.path)

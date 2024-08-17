@@ -32,37 +32,78 @@ def extract_license_from_pyproject(pyproject_path: Path) -> str:
     return temp.strip()
 
 
-LICENSE_TAG = "# %license_header%"
+LICENSE_TAG = "%license_header%"
 
 
-def prepare_license_header(license_header_text: str) -> str:
+def convert_to_multiline_comment(text, file_extension):
+    comments = {
+        "js": "/*{}*/",  # JavaScript
+        "java": "/*{}*/",  # Java
+        "c": "/*{}*/",  # C
+        "cpp": "/*{}*/",  # C++
+        "cs": "/*{}*/",  # C#
+        "php": "/*{}*/",  # PHP
+        "rb": "=begin\n{}\n=end",  # Ruby
+        "swift": "/*{}*/",  # Swift
+        "kt": "/*{}*/",  # Kotlin
+        "html": "<!--{}-->",  # HTML
+        "css": "/*{}*/",  # CSS
+        "sql": "/*{}*/",  # SQL
+        "sh": ": '{}'",  # Bash
+        "go": "/*{}*/",  # Go
+        "r": "# {}",  # R (line by line)
+        "py": "# {}",  # Python (line by line)
+        "m": "%{{\n{}\n%}}",  # MATLAB
+    }
+
+    # For Python & R, we need to handle line by line comment addition
+    if file_extension in {"py", "r"}:
+        text = text.replace("\n", "\n# ")
+        return text
+
+    if file_extension not in comments:
+        raise ValueError(f"Unsupported file extension: {file_extension}")
+
+    # Retrieve the comment template
+    comment_template = comments[file_extension]
+
+    return comment_template.format(text)
+
+
+def prepare_license_header(license_header_text: str, file_extension: str) -> str:
     spdx: str = str(Config._parse_config().get("spdx"))
-    license_header = "\n" + license_header_text
-    license_header = license_header.replace("\n", "\n# ")
+    license_header = (
+        "\n" + LICENSE_TAG + "\n" + license_header_text + "\n" + LICENSE_TAG + "\n"
+    )
+    license_header = convert_to_multiline_comment(license_header, file_extension)
     license_header = license_header.replace("%%SPDX%%", spdx)
-    license_header = LICENSE_TAG + license_header + "\n" + LICENSE_TAG
 
     return license_header
 
 
 def remove_license_header(file_content: str) -> str:
-    content = file_content.splitlines()
+    content = file_content.split("\n")
     i = 0
-    in_header = False
-    while i < len(content):
+    n = len(content)
+
+    while i < n:
         line = content[i]
-        if not line or line[0] != "#":
-            break
 
-        if LICENSE_TAG in line and not in_header:
-            in_header = True
-        elif LICENSE_TAG in line and in_header:
+        if LICENSE_TAG in line[-len(LICENSE_TAG) :]:
+            content.pop(i - 1)
+            i -= 1
             content.pop(i)
-            break
-
-        if in_header:
+            line = content[i]
+            while LICENSE_TAG not in line:
+                content.pop(i)
+                line = content[i]
             content.pop(i)
+            content.pop(i)
+            return "\n".join(content)
 
+        i += 1
+
+    print("remaining content", content)
     return "\n".join(content)
 
 

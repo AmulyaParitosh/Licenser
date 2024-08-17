@@ -1,10 +1,6 @@
-author = John Doe
-email = john@doe.test
-spdx = MIT
-
-[header]
-'''
-SPDX: %%SPDX%%
+/*
+%license_header%
+SPDX: MIT
 
 
 
@@ -14,4 +10,7 @@ ________________________________________________
 This is a Toy project
 by John Doe
 ________________________________________________
-'''
+%license_header%
+*/
+
+asgfhgsahfkshgk

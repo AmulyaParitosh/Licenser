@@ -30,10 +30,10 @@ def create_license_file(
 
 
 def add_license_header(file_path: Path, license_header: str) -> None:
-    license_header = utils.prepare_license_header(license_header)
-
     content = file_path.read_text(encoding="utf-8")
     content_without_header = utils.remove_license_header(content)
 
+    license_header = utils.prepare_license_header(license_header, file_path.suffix[1:])
     modified_content = license_header + "\n" + content_without_header
+
     file_path.write_text(modified_content, encoding="utf-8")

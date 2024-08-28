@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from . import utils
-from .config import Config
+from .config import TEMPLATE_DIR, Config
 
 
 def create_license_file(
@@ -12,7 +12,7 @@ def create_license_file(
     working_dir: Path,
 ) -> None:
     license_text = (
-        (Config.app_dir / f"src/licenser/templates/{spdx_identifier}.txt")
+        (TEMPLATE_DIR / f"{spdx_identifier}.txt")
         .read_text(encoding="utf-8")
         .replace("[year]", str(year))
         .replace("[fullname]", author)

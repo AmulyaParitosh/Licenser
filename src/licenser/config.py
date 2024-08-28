@@ -1,7 +1,6 @@
 import json
 import re
 import subprocess
-from email.policy import default
 from pathlib import Path
 from typing import Dict, TypedDict, Union, cast
 
@@ -14,6 +13,7 @@ class ConfigDict(TypedDict):
 
 
 RawConfigDict = Dict[str, Union[str, Dict[str, str]]]
+TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
 def get_git_credentials(name: str) -> str:
@@ -83,11 +83,8 @@ class Config:
     author: str = get_git_credentials("name")
     email: str = get_git_credentials("email")
     working_dir: Path = Path.cwd()
-    app_dir: Path = Path(__file__).parent.parent.parent
     config_path: Path = working_dir / ".licenserConfig"
-    default_config_template: Path = (
-        app_dir / "src/licenser/templates/default.licenserConfig"
-    )
+    default_config_template: Path = TEMPLATE_DIR / "default.licenserConfig"
 
     def __init__(self, working_dir: Path) -> None:
         self.working_dir = working_dir
@@ -102,9 +99,7 @@ class Config:
         )
 
         self.available_licenses = json.loads(
-            (self.app_dir / "src/licenser/templates/licenses_index.json").read_text(
-                encoding="utf-8"
-            )
+            (TEMPLATE_DIR / "licenses_index.json").read_text(encoding="utf-8")
         )
 
         self.author = (
@@ -127,7 +122,6 @@ class Config:
 
 if __name__ == "__main__":
     test_config = Config(Path.cwd())
-    print(f"App Directory: {test_config.app_dir}")
     print(f"Author: {test_config.author}")
     print(f"Email: {test_config.email}")
     print(f"SPDX: {test_config.spdx}")

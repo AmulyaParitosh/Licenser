@@ -7,25 +7,25 @@ from typing import List, Optional
 import argcomplete
 
 from . import services
-from .config import Config, DefaultConfigPath
+from .config import Config
 
 
 class LicenserInterface:
 
-    config: Config
-    args: argparse.Namespace
+    def __init__(self, working_dir: Path) -> None:
+        try:
+            self.config = Config(working_dir)
+        except FileNotFoundError as e:
+            print(e)
+            exit(1)
 
-    def __init__(self, config: Config) -> None:
-        self.config = config
+    def create_parser(self) -> argparse.ArgumentParser:
 
-        self.parser = argparse.ArgumentParser(
+        parser = argparse.ArgumentParser(
             description="Generate license files with SPDX identifier."
         )
-        argcomplete.autocomplete(self.parser)
 
-        subparsers = self.parser.add_subparsers(
-            title="command", help="Licenser commands"
-        )
+        subparsers = parser.add_subparsers(title="command", help="Licenser commands")
 
         create_parser = subparsers.add_parser("create", help="Create a license file")
 
@@ -33,7 +33,7 @@ class LicenserInterface:
             "spdx",
             type=str,
             help="SPDX identifier of the license to generate",
-            choices=list(config.available_licenses.keys()),
+            choices=list(self.config.available_licenses.keys()),
         )
         create_parser.add_argument(
             "-i",
@@ -79,19 +79,21 @@ class LicenserInterface:
         )
         generate_config_parser.set_defaults(func=self.generate_config_command)
 
+        argcomplete.autocomplete(parser)
+        return parser
+
     def run(self, args: Optional[List[str]] = None) -> None:
+        parser = self.create_parser()
         if args:
-            parsed_args = self.parser.parse_args(args)
+            parsed_args = parser.parse_args(args)
         else:
-            parsed_args = self.parser.parse_args()
+            parsed_args = parser.parse_args()
 
         parsed_args.func(parsed_args)
 
     def create_command(self, args: argparse.Namespace) -> None:
-        working_dir: Path = self.config.working_dir
-        license_path: Path = working_dir / "LICENSE"
 
-        if license_path.exists() and not args.overwrite:
+        if (self.config.working_dir / "LICENSE").exists() and not args.overwrite:
             raise FileExistsError(
                 "LICENSE file already exists. Use -o to force overwrite."
             )
@@ -114,30 +116,32 @@ class LicenserInterface:
             if not args.year:
                 args.year = datetime.datetime.now().year
 
-        services.create_license_file(
-            args.spdx,
-            int(args.year),
-            str(args.author),
-            str(args.email),
-            working_dir,
-        )
-        self.config.update_spdx(args.spdx)
-
-    def header_command(self, args: argparse.Namespace) -> None:
-        if not DefaultConfigPath.exists():
-            print(f"config not found at {DefaultConfigPath}.")
+        try:
+            services.create_license_file(
+                str(args.spdx),
+                int(args.year),
+                str(args.author),
+                str(args.email),
+                self.config.working_dir,
+            )
+            self.config.write_config()
+            print(f"{args.spdx} license file generated successfully.")
+        except ValueError as e:
+            print(e)
+            exit(1)
+        except FileNotFoundError:
+            print(f"SPDX identifier :{args.spdx} is not supported")
             exit(1)
 
-        try:
-            license_header_text = self.config.header.get("content", "")
-        except AttributeError:
-            print(f"header content not found in {DefaultConfigPath}")
+    def header_command(self, args: argparse.Namespace) -> None:
+        if not self.config.config_file.exists():
+            print(f"config not found at {self.config.config_file}.")
             exit(1)
 
         if not args.dir:
             services.add_license_header(
                 args.path,
-                license_header_text,
+                self.config.header_content,
                 spdx=self.config.spdx,
                 author=self.config.author,
                 email=self.config.email,
@@ -151,7 +155,7 @@ class LicenserInterface:
                 elif path.is_file() and args.regex and re.match(args.regex, path.name):
                     services.add_license_header(
                         path,
-                        license_header_text,
+                        self.config.header_content,
                         spdx=self.config.spdx,
                         author=self.config.author,
                         email=self.config.email,
@@ -163,14 +167,14 @@ class LicenserInterface:
         default_config_template = (
             self.config.app_dir / "src/licenser/templates/default.licenserConfig"
         )
-        if DefaultConfigPath.exists():
+        if self.config.config_file.exists():
             print(".licenserConfig already exists")
             exit(1)
 
         config = Config(default_config_template)
-        config.header["content"] = (
-            config.header["content"]
-            .replace("%%SPDX%%", config.spdx)
-            .replace("%%AUTHOR%%", str(config.author))
+        config.header_content = (
+            config.header_content.replace("%%SPDX%%", config.spdx)
+            .replace("%%AUTHOR%%", config.author)
+            .replace("%%EMAIL%%", config.email)
         )
         config.write_config()

@@ -1,153 +1,142 @@
 import json
 import re
 import subprocess
+from email.policy import default
 from pathlib import Path
-from typing import Dict, Optional, Union
-
-_ParsedConfigItem = Union[str, "_ParsedConfig", Path]
-_ParsedConfig = Dict[str, _ParsedConfigItem]
-
-DefaultConfigPath = Path.cwd() / ".licenserConfig"
-
-class GitUserCredential:
-
-    def __init__(self, name: Optional[str] = None) -> None:
-        self.credential_identifier = name
-
-    def __set_name__(self, owner, name) -> None:
-        if self.credential_identifier is None:
-            self.credential_identifier = name
-
-    def __get__(self, obj, objtype=None) -> Union[str, None]:
-        try:
-            credential = (
-                subprocess.check_output(
-                    ["git", "config", f"user.{self.credential_identifier}"]
-                )
-                .strip()
-                .decode("utf-8")
-            )
-            return credential
-        except subprocess.CalledProcessError:
-            return None
+from typing import Dict, TypedDict, Union, cast
 
 
-class Config:
-
-    author = GitUserCredential("name")
-    email = GitUserCredential()
-    working_dir = Path.cwd()
-    app_dir = Path(__file__).parent.parent.parent
-    available_licenses: Dict[str, Dict[str, str]] = json.loads(
-        (app_dir / "src/licenser/templates/licenses_index.json").read_text(
-            encoding="utf-8"
-        )
-    )
+class ConfigDict(TypedDict):
+    author: str
+    email: str
     spdx: str
     header: Dict[str, str]
 
-    def __init__(self, config_file: Path) -> None:
-        if config_file.exists():
-            self.__config: _ParsedConfig = self._parse_config(config_file)
-        else:
-            self.__config: _ParsedConfig = {}
 
-        self.author = self.__config.get("author", self.author)
-        self.email = self.__config.get("email", self.email)
-        self.spdx = self.__config.get("spdx", "MIT")
+RawConfigDict = Dict[str, Union[str, Dict[str, str]]]
 
-    def __getattr__(self, name: str) -> _ParsedConfigItem:
-        return self.__config.get(name, "")
 
-    @classmethod
-    def test_config(cls) -> "Config":
-        config = cls(DefaultConfigPath)
-        config.working_dir = Path("example")
-        return config
+def get_git_credentials(name: str) -> str:
+    try:
+        return (
+            subprocess.check_output(["git", "config", f"user.{name}"])
+            .strip()
+            .decode("utf-8")
+        )
+    except subprocess.CalledProcessError:
+        return ""
+
+
+class ConfigParser:
 
     @staticmethod
-    def _parse_config(file_path: Path = DefaultConfigPath) -> _ParsedConfig:
+    def decode(file_path: Path) -> RawConfigDict:
         config = {}
         current_section = None
         multiline_content = []
         is_multiline = False
 
-        for line in file_path.read_text(encoding="utf-8").split("\n"):
+        for line in file_path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
-
-            # Skip comments
-            if line.startswith("#"):
+            if line.startswith("#") or not line:
                 continue
 
-            # Check for section headers
-            section_match = re.match(r"\[(.*?)\]", line)
-            if section_match:
+            if section_match := re.match(r"\[(.*?)\]", line):
                 current_section = section_match.group(1)
                 config[current_section] = {}
-                continue
-
-            # Check for multiline start/end
-            if line == "'''":
+            elif line == "'''":
                 if is_multiline:
-                    # End of multiline block
                     if current_section:
                         config[current_section]["content"] = "\n".join(
                             multiline_content
                         )
                     multiline_content = []
                 is_multiline = not is_multiline
-                continue
-
-            if is_multiline:
+            elif is_multiline:
                 multiline_content.append(line)
-            else:
-                # Parse key-value pairs
-                if "=" in line:
-                    key, value = map(str.strip, line.split("=", 1))
-                    if current_section:
-                        config[current_section][key] = value
-                    else:
-                        config[key] = value
+            elif "=" in line:
+                key, value = map(str.strip, line.split("=", 1))
+                if current_section:
+                    config[current_section][key] = value
+                else:
+                    config[key] = value
 
         return config
 
     @staticmethod
-    def _encode_config(config: _ParsedConfig) -> str:
+    def encode(config: Union[ConfigDict, RawConfigDict]) -> str:
         lines = []
-
-        # Add top-level key-value pairs
         for key, value in config.items():
-            if not isinstance(value, dict):
+            if isinstance(value, dict):
+                lines.append(f"\n[{key}]")
+                for subkey, subvalue in value.items():
+                    if subkey != "content":
+                        lines.append(f"{subkey} = {subvalue}")
+                if "content" in value:
+                    lines.extend(["'''", value["content"], "'''"])
+            else:
                 lines.append(f"{key} = {value}")
-
-        # Add sections
-        for section, content in config.items():
-            if isinstance(content, dict):
-                lines.append(f"\n[{section}]")
-                for key, value in content.items():
-                    if key != "content":
-                        lines.append(f"{key} = {value}")
-                if "content" in content:
-                    lines.append("'''")
-                    lines.append(content["content"])
-                    lines.append("'''")
-
         return "\n".join(lines)
 
-    def write_config(self, file_path: Path = DefaultConfigPath) -> None:
-        file_path.write_text(self._encode_config(self.__config), encoding="utf-8")
 
-    def update_spdx(self, spdx: str):
-        self.__config["spdx"] = spdx
-        self.write_config()
+class Config:
+    author: str = get_git_credentials("name")
+    email: str = get_git_credentials("email")
+    working_dir: Path = Path.cwd()
+    app_dir: Path = Path(__file__).parent.parent.parent
+    config_path: Path = working_dir / ".licenserConfig"
+    default_config_template: Path = (
+        app_dir / "src/licenser/templates/default.licenserConfig"
+    )
+
+    def __init__(self, working_dir: Path) -> None:
+        self.working_dir = working_dir
+        self.config_file = working_dir / ".licenserConfig"
+
+        if not self.config_file.exists():
+            with self.config_file.open("w+", encoding="utf-8") as f:
+                f.write(self.default_config_template.read_text(encoding="utf-8"))
+
+        self.__config: ConfigDict = cast(
+            ConfigDict, ConfigParser.decode(self.config_file)
+        )
+
+        self.available_licenses = json.loads(
+            (self.app_dir / "src/licenser/templates/licenses_index.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        self.author = (
+            self.__config["author"] if self.__config["author"] else self.author
+        )
+        self.email = self.__config["email"] if self.__config["email"] else self.email
+        self.spdx = self.__config.get("spdx", "MIT")
+        self.header_content: str = self.__config["header"]["content"]
+
+    # @classmethod
+    # def test_config(cls) -> "Config":
+    #     tests_config = cls(cls.config_path)
+    #     tests_config.working_dir = Path("example")
+    #     return tests_config
+
+    def write_config(self) -> None:
+        self.__config["author"] = self.author
+        self.__config["email"] = self.email
+        self.__config["spdx"] = self.spdx
+        self.__config["header"]["content"] = self.header_content
+
+        self.config_file.write_text(
+            ConfigParser.encode(self.__config), encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":
-    x = Config(DefaultConfigPath)
-    print(x.app_dir)
-    print(x.author)
-    print(x.email)
-    print(x.spdx)
-    print(x.working_dir)
-    print(x.header.get("content"))
-    x.update_spdx("MIT")
+    test_config = Config(Path.cwd())
+    print(f"App Directory: {test_config.app_dir}")
+    print(f"Author: {test_config.author}")
+    print(f"Email: {test_config.email}")
+    print(f"SPDX: {test_config.spdx}")
+    print(f"Working Directory: {test_config.working_dir}")
+    test_config.spdx = "Apache-2.0"
+    test_config.write_config()

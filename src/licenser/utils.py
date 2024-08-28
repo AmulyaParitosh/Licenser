@@ -1,91 +1,75 @@
 from pathlib import Path
 
-from .config import Config
+LICENSE_TAG = "%license_header%"
 
-
-class LicenseNotSupportedError(Exception):
-
-    def __init__(self, license_name: str) -> None:
-        super().__init__(f"Unknown or UnSupported SPDX identifier {license_name}")
-
-
-def fetch_license_text(spdx_identifier: str) -> str:
-    try:
-        with open(
-            Config.app_dir / f"src/licenser/templates/{spdx_identifier}.txt",
-            "r",
-            encoding="utf-8",
-        ) as f:
-            return f.read()
-
-    except FileNotFoundError as err:
-        raise LicenseNotSupportedError(spdx_identifier) from err
+LANG_COMMENT_MAP = {
+    "js": "/*{}*/",  # JavaScript
+    "java": "/*{}*/",  # Java
+    "c": "/*{}*/",  # C
+    "cpp": "/*{}*/",  # C++
+    "cs": "/*{}*/",  # C#
+    "php": "/*{}*/",  # PHP
+    "rb": "=begin\n{}\n=end",  # Ruby
+    "swift": "/*{}*/",  # Swift
+    "kt": "/*{}*/",  # Kotlin
+    "html": "<!--{}-->",  # HTML
+    "css": "/*{}*/",  # CSS
+    "sql": "/*{}*/",  # SQL
+    "sh": ": '{}'",  # Bash
+    "go": "/*{}*/",  # Go
+    "r": "# {}",  # R (line by line)
+    "py": "# {}",  # Python (line by line)
+    "m": "%{{\n{}\n%}}",  # MATLAB
+}
 
 
 def extract_license_from_pyproject(pyproject_path: Path) -> str:
     # TODO: can be done with regex, look into it later
 
-    with pyproject_path.open("r", encoding="utf-8") as f:
-        original_pyproject_data = f.read()
+    pyproject_data = pyproject_path.read_text(encoding="utf-8")
 
     key = "license = "
-    _, temp = original_pyproject_data.split(key)
+    _, temp = pyproject_data.split(key)
     temp, _ = temp.split("\n", 1)
     return temp.strip()
 
 
-LICENSE_TAG = "%license_header%"
+def update_pyproject_license(new_spdx: str, pyproject_path: Path) -> None:
+    original_pyproject_data = pyproject_path.read_text(encoding="utf-8")
+    original_license_section = extract_license_from_pyproject(pyproject_path)
 
+    new_license_section = f'{"{"}text = "{new_spdx}"{"}"}'
+    new_pyproject_data = original_pyproject_data.replace(
+        original_license_section, new_license_section
+    )
 
-def convert_to_multiline_comment(text, file_extension):
-    comments = {
-        "js": "/*{}*/",  # JavaScript
-        "java": "/*{}*/",  # Java
-        "c": "/*{}*/",  # C
-        "cpp": "/*{}*/",  # C++
-        "cs": "/*{}*/",  # C#
-        "php": "/*{}*/",  # PHP
-        "rb": "=begin\n{}\n=end",  # Ruby
-        "swift": "/*{}*/",  # Swift
-        "kt": "/*{}*/",  # Kotlin
-        "html": "<!--{}-->",  # HTML
-        "css": "/*{}*/",  # CSS
-        "sql": "/*{}*/",  # SQL
-        "sh": ": '{}'",  # Bash
-        "go": "/*{}*/",  # Go
-        "r": "# {}",  # R (line by line)
-        "py": "# {}",  # Python (line by line)
-        "m": "%{{\n{}\n%}}",  # MATLAB
-    }
-
-    # For Python & R, we need to handle line by line comment addition
-    if file_extension in {"py", "r"}:
-        text = text.replace("\n", "\n# ")
-        return text
-
-    if file_extension not in comments:
-        raise ValueError(f"Unsupported file extension: {file_extension}")
-
-    # Retrieve the comment template
-    comment_template = comments[file_extension]
-
-    return comment_template.format(text)
+    pyproject_path.write_text(new_pyproject_data, encoding="utf-8")
 
 
 def prepare_license_header(
     license_header_text: str, file_extension: str, **kwargs
 ) -> str:
     license_header = (
-        "\n" + LICENSE_TAG + "\n" + license_header_text + "\n" + LICENSE_TAG + "\n"
-    )
-    license_header = (
-        license_header.replace("%%SPDX%%", kwargs.get("spdx", "%%SPDX%%"))
+        license_header_text.replace("%%SPDX%%", kwargs.get("spdx", "%%SPDX%%"))
         .replace("%%AUTHOR%%", kwargs.get("author", "%%AUTHOR%%"))
         .replace("%%EMAIL%%", kwargs.get("email", "%%EMAIL%%"))
     )
-    license_header = convert_to_multiline_comment(license_header, file_extension)
+    license_header = (
+        "\n" + LICENSE_TAG + "\n" + license_header + "\n" + LICENSE_TAG + "\n"
+    )
 
-    return license_header
+    # For Python & R, we need to handle line by line comment addition
+    if file_extension in {"py", "r"}:
+        text = license_header.replace("\n", "\n# ")
+        return text
+
+    # Retrieve the comment template
+    try:
+        comment_template = LANG_COMMENT_MAP[file_extension]
+    except KeyError as e:
+        raise ValueError(f"Unsupported file extension: {file_extension}") from e
+
+    return comment_template.format(license_header)
 
 
 def remove_license_header(file_content: str) -> str:
@@ -111,15 +95,3 @@ def remove_license_header(file_content: str) -> str:
         i += 1
 
     return "\n".join(content)
-
-
-def update_pyproject_license(new_spdx: str, pyproject_path: Path) -> None:
-    original_pyproject_data = pyproject_path.read_text(encoding="utf-8")
-    original_license_section = extract_license_from_pyproject(pyproject_path)
-
-    new_license_section = f'{"{"}text = "{new_spdx}"{"}"}'
-    new_pyproject_data = original_pyproject_data.replace(
-        original_license_section, new_license_section
-    )
-
-    pyproject_path.write_text(new_pyproject_data, encoding="utf-8")

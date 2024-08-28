@@ -1,0 +1,12 @@
+author = John Doe
+email = john@doe.test
+spdx = MIT
+
+[header]
+'''
+SPDX: %%SPDX%%
+
+________________________________________________
+This project is build by %%AUTHOR%%.
+________________________________________________
+'''

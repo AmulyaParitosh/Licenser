@@ -1,8 +1,7 @@
-from .config import Config, DefaultConfigPath
+from .config import Config
 from .interface import LicenserInterface
 
 
 def main():
-    config = Config(DefaultConfigPath)
-    cli = LicenserInterface(config)
+    cli = LicenserInterface(Config.config_path)
     cli.run()

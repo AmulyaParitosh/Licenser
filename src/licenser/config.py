@@ -114,12 +114,6 @@ class Config:
         self.spdx = self.__config.get("spdx", "MIT")
         self.header_content: str = self.__config["header"]["content"]
 
-    # @classmethod
-    # def test_config(cls) -> "Config":
-    #     tests_config = cls(cls.config_path)
-    #     tests_config.working_dir = Path("example")
-    #     return tests_config
-
     def write_config(self) -> None:
         self.__config["author"] = self.author
         self.__config["email"] = self.email

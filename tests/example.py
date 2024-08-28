@@ -6,7 +6,9 @@ from licenser.interface import LicenserInterface
 
 def run(arg_str: str):
     # config = Config(Path("example").absolute())
-    cli = LicenserInterface(Path("example"))
+    test_dir = Path("example").absolute()
+    print(f"{test_dir=}")
+    cli = LicenserInterface(test_dir)
 
     args = arg_str.split()
     cli.run(args)

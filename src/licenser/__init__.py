@@ -1,7 +1,8 @@
-from .config import Config
+from pathlib import Path
+
 from .interface import LicenserInterface
 
 
 def main():
-    cli = LicenserInterface(Config.config_path)
+    cli = LicenserInterface(Path.cwd())
     cli.run()

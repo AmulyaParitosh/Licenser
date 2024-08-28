@@ -92,6 +92,7 @@ class LicenserInterface:
         parsed_args.func(parsed_args)
 
     def create_command(self, args: argparse.Namespace) -> None:
+        self.config.spdx = args.spdx
 
         if (self.config.working_dir / "LICENSE").exists() and not args.overwrite:
             raise FileExistsError(
@@ -164,9 +165,7 @@ class LicenserInterface:
         recursive_add_license_header(args.path)
 
     def generate_config_command(self, args: argparse.Namespace) -> None:
-        default_config_template = (
-            self.config.app_dir / "src/licenser/templates/default.licenserConfig"
-        )
+        default_config_template = Path("src/licenser/templates/default.licenserConfig")
         if self.config.config_file.exists():
             print(".licenserConfig already exists")
             exit(1)

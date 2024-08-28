@@ -1,9 +1,10 @@
 
 # %license_header%
-# SPDX: MIT
-# 
+# SPDX: BSD-3-Clause
+# This is a license header for the example project
 # ________________________________________________
-# This project is build by John Doe.
+# This is a Toy project
+# by Amulya Paritosh
 # ________________________________________________
 # %license_header%
 # 

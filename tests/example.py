@@ -14,6 +14,7 @@ def run(arg_str: str):
 
 if __name__ == "__main__":
     # run("create BSD-3-Clause --author John --email john@test.com --year 2024 -o")
-    run("create BSD-3-Clause")
+    # run("create BSD-3-Clause -o")
+    run('header -d . ".*.py"')
     # run("-h")
     # add_license_header(Path("example/test.py"), Path("example/.license_header"))

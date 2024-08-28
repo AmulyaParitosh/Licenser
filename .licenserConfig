@@ -1,12 +1,16 @@
-author = Amulya Paritosh
-email = amulya1171@gmail.com
-spdx = BSD-3-Clause
+author =
+email =
+spdx = MIT
 
 [header]
 '''
 SPDX: %%SPDX%%
+
+
+
 This is a license header for the example project
 ________________________________________________
+
 This is a Toy project
 by %%AUTHOR%%
 ________________________________________________

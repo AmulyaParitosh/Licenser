@@ -50,6 +50,28 @@ Licenser supports the following licenses:
 | MPL-2.0 | Mozilla Public License 2.0 |
 | Unlicense | The Unlicense |
 
+
+## Supported Programming Languages for SPDX Headers
+
+Licenser is compatible with the following programming language file formats for adding SPDX headers:
+
+- JavaScript (`js`): `/*{}*/`
+- Java (`java`): `/*{}*/`
+- C (`c`): `/*{}*/`
+- C++ (`cpp`): `/*{}*/`
+- C# (`cs`): `/*{}*/`
+- PHP (`php`): `/*{}*/`
+- Ruby (`rb`): `=begin\n{}\n=end`
+- Swift (`swift`): `/*{}*/`
+- Kotlin (`kt`): `/*{}*/`
+- HTML (`html`): `<!--{}-->`
+- CSS (`css`): `/*{}*/`
+- SQL (`sql`): `/*{}*/`
+- Bash (`sh`): `: '{}'`
+- Go (`go`): `/*{}*/`
+- R (`r`): `# {}`
+- Python (`py`): `# {}`
+- MATLAB (`m`): `%{{\n{}\n%}}`
 ## Installation
 
 You can install Licenser directly from GitHub using pip:
